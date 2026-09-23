@@ -1,0 +1,30 @@
+# OpenShift secrets
+pull-secret*
+auth/
+kubeconfig
+kubeadmin-password
+*.key
+*.pem
+
+# SSH
+id_rsa*
+id_ed25519*
+
+# Ansible Vault / secrets
+vault-password*
+*.vault
+
+# OpenShift installation generated files
+.terraform/
+terraform.tfstate*
+metadata.json
+
+# Temporary
+*.log
+*.tmp
+*.swp
+.DS_Store
+
+# Local environment
+.env
+.env.*

@@ -1,0 +1,193 @@
+============================================================
+ OPENSHIFT HOMELAB - KVM HOST INVENTORY
+============================================================
+
+Date: Tue Sep 22 09:47:41 PM -03 2026
+
+===== HOSTNAME =====
+ Static hostname: kvm-server.example.lab
+       Icon name: computer-desktop
+         Chassis: desktop 🖥️
+      Machine ID: ab26c67c7741436cafc7fde50ebae47f
+         Boot ID: b7f957d0474c42bda6239c010e6b4c40
+Operating System: Rocky Linux 9.4 (Blue Onyx)
+     CPE OS Name: cpe:/o:rocky:rocky:9::baseos
+          Kernel: Linux 5.14.0-427.22.1.el9_4.x86_64
+    Architecture: x86-64
+ Hardware Vendor: ASUSTeK Computer INC.
+  Hardware Model: M5A78L-M PLUS/USB3
+Firmware Version: 0502
+
+===== OPERATING SYSTEM =====
+NAME="Rocky Linux"
+VERSION="9.4 (Blue Onyx)"
+ID="rocky"
+ID_LIKE="rhel centos fedora"
+VERSION_ID="9.4"
+PLATFORM_ID="platform:el9"
+PRETTY_NAME="Rocky Linux 9.4 (Blue Onyx)"
+ANSI_COLOR="0;32"
+LOGO="fedora-logo-icon"
+CPE_NAME="cpe:/o:rocky:rocky:9::baseos"
+HOME_URL="https://rockylinux.org/"
+BUG_REPORT_URL="https://bugs.rockylinux.org/"
+SUPPORT_END="2032-05-31"
+ROCKY_SUPPORT_PRODUCT="Rocky-Linux-9"
+ROCKY_SUPPORT_PRODUCT_VERSION="9.4"
+REDHAT_SUPPORT_PRODUCT="Rocky Linux"
+REDHAT_SUPPORT_PRODUCT_VERSION="9.4"
+
+===== KERNEL =====
+Linux kvm-server.example.lab 5.14.0-427.22.1.el9_4.x86_64 #1 SMP PREEMPT_DYNAMIC Wed Jun 19 17:35:04 UTC 2024 x86_64 x86_64 x86_64 GNU/Linux
+
+===== CPU =====
+Architecture:                       x86_64
+CPU op-mode(s):                     32-bit, 64-bit
+Address sizes:                      48 bits physical, 48 bits virtual
+Byte Order:                         Little Endian
+CPU(s):                             8
+On-line CPU(s) list:                0-7
+Vendor ID:                          AuthenticAMD
+Model name:                         AMD FX(tm)-8300 Eight-Core Processor
+CPU family:                         21
+Model:                              2
+Thread(s) per core:                 2
+Core(s) per socket:                 4
+Socket(s):                          1
+Stepping:                           0
+Frequency boost:                    enabled
+CPU(s) scaling MHz:                 100%
+CPU max MHz:                        3300.0000
+CPU min MHz:                        1400.0000
+BogoMIPS:                           6630.18
+Flags:                              fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl nonstop_tsc cpuid extd_apicid aperfmperf pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 popcnt aes xsave avx f16c lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs xop skinit wdt fma4 tce nodeid_msr tbm topoext perfctr_core perfctr_nb cpb hw_pstate ssbd ibpb vmmcall bmi1 arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold
+Virtualization:                     AMD-V
+L1d cache:                          128 KiB (8 instances)
+L1i cache:                          256 KiB (4 instances)
+L2 cache:                           8 MiB (4 instances)
+L3 cache:                           8 MiB (1 instance)
+NUMA node(s):                       1
+NUMA node0 CPU(s):                  0-7
+Vulnerability Gather data sampling: Not affected
+Vulnerability Itlb multihit:        Not affected
+Vulnerability L1tf:                 Not affected
+Vulnerability Mds:                  Not affected
+Vulnerability Meltdown:             Not affected
+Vulnerability Mmio stale data:      Not affected
+Vulnerability Retbleed:             Mitigation; untrained return thunk; SMT vulnerable
+Vulnerability Spec rstack overflow: Not affected
+Vulnerability Spec store bypass:    Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:           Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:           Mitigation; Retpolines, IBPB conditional, STIBP disabled, RSB filling, PBRSB-eIBRS Not affected
+Vulnerability Srbds:                Not affected
+Vulnerability Tsx async abort:      Not affected
+
+===== HARDWARE VIRTUALIZATION =====
+vmx/svm flags:
+8
+
+===== KVM MODULES =====
+kvm_amd               212992  0
+kvm                  1339392  1 kvm_amd
+
+===== NESTED VIRTUALIZATION =====
+AMD nested: 1
+
+===== MEMORY =====
+               total        used        free      shared  buff/cache   available
+Mem:            30Gi       1.6Gi        27Gi        14Mi       2.6Gi        29Gi
+Swap:          4.0Gi       0.0Ki       4.0Gi
+
+===== BLOCK DEVICES =====
+NAME                      SIZE TYPE FSTYPE      MOUNTPOINTS MODEL
+sda                     223.6G disk                         KINGSTON SA400S37240G
+├─sda1                      1G part xfs         /boot       
+└─sda2                  222.6G part LVM2_member             
+  ├─rl_home--srv01-root    50G lvm  xfs         /           
+  ├─rl_home--srv01-swap     4G lvm  swap        [SWAP]      
+  └─rl_home--srv01-var  168.6G lvm  xfs         /var        
+sdb                     931.5G disk                         WDC WD10EZEX-00WN4A0
+└─sdb1                  931.5G part ext4        /mnt/hd1tb  
+sr0                      1024M rom                          Optiarc DVD RW AD-7240S
+
+===== FILESYSTEMS =====
+Filesystem                      Type      Size  Used Avail Use% Mounted on
+devtmpfs                        devtmpfs  4.0M     0  4.0M   0% /dev
+tmpfs                           tmpfs      16G     0   16G   0% /dev/shm
+tmpfs                           tmpfs     6.2G   14M  6.2G   1% /run
+/dev/mapper/rl_home--srv01-root xfs        50G  5.3G   45G  11% /
+/dev/sda1                       xfs       960M  504M  457M  53% /boot
+/dev/mapper/rl_home--srv01-var  xfs       169G  1.8G  167G   2% /var
+tmpfs                           tmpfs     3.1G  144K  3.1G   1% /run/user/1000
+/dev/sdb1                       ext4      916G  219G  652G  26% /mnt/hd1tb
+
+===== LVM PHYSICAL VOLUMES =====
+  PV         VG            Fmt  Attr PSize   PFree
+  /dev/sda2  rl_home-srv01 lvm2 a--  222.56g 4.00m
+
+===== LVM VOLUME GROUPS =====
+  VG            #PV #LV #SN Attr   VSize   VFree
+  rl_home-srv01   1   3   0 wz--n- 222.56g 4.00m
+
+===== LVM LOGICAL VOLUMES =====
+  LV   VG            Attr       LSize    Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  root rl_home-srv01 -wi-ao----   50.00g                                                    
+  swap rl_home-srv01 -wi-ao----    4.00g                                                    
+  var  rl_home-srv01 -wi-ao---- <168.56g                                                    
+
+===== NETWORK INTERFACES =====
+lo               UNKNOWN        127.0.0.1/8 
+enp5s0           DOWN           
+enp2s0f0         UP             
+enp2s0f1         UP             192.168.10.25/24 
+enp0s18f2u2u2    DOWN           
+br-ex            UP             192.168.10.40/24 
+br-int           DOWN           
+virbr0           DOWN           192.168.122.1/24 
+
+===== ROUTING =====
+default via 192.168.10.1 dev enp2s0f1 proto dhcp src 192.168.10.25 metric 101 
+default via 192.168.10.1 dev br-ex proto static metric 425 
+192.168.10.0/24 dev enp2s0f1 proto kernel scope link src 192.168.10.25 metric 101 
+192.168.10.0/24 dev br-ex proto kernel scope link src 192.168.10.40 metric 425 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 linkdown 
+
+===== NETWORKMANAGER CONNECTIONS =====
+NAME                 UUID                                  TYPE      DEVICE   
+enp2s0f1             a1b20e88-8870-4811-bf71-ab70e1ce6fd3  ethernet  enp2s0f1 
+br-ex                0178d8f9-5bd3-480c-ba78-9559cc9072dd  bridge    br-ex    
+br-ex-port-enp2s0f0  f2239bf5-5806-41de-b990-7db1d8a6fe3b  ethernet  enp2s0f0 
+br-int               04b59c28-4c0c-4a2a-b4ab-fadcc47384ce  bridge    br-int   
+lo                   7dc7b23b-c40c-44bb-b966-954795ab8ad4  loopback  lo       
+virbr0               9e3aed53-7a47-4c7b-acca-f6706f6c1235  bridge    virbr0   
+enp2s0f0             eb98de40-da26-47ed-b5c8-a737705b2e99  ethernet  --       
+enp5s0               fcffbcfc-aadb-337e-bf3d-d8467a2313b7  ethernet  --       
+
+===== LIBVIRT VERSION =====
+Compiled against library: libvirt 10.0.0
+Using library: libvirt 10.0.0
+Using API: QEMU 10.0.0
+Running hypervisor: QEMU 8.2.0
+
+
+===== LIBVIRT DOMAINS =====
+ Id   Name   State
+--------------------
+
+
+===== LIBVIRT NETWORKS =====
+ Name   State   Autostart   Persistent
+----------------------------------------
+
+
+===== LIBVIRT STORAGE POOLS =====
+ Name   State   Autostart
+---------------------------
+
+
+============================================================
+ INVENTORY COMPLETE
+============================================================
+
+Evidence file:
+docs/evidence/host/host-inventory-20260922-214741.txt
