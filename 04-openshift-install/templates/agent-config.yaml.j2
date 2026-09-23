@@ -1,0 +1,47 @@
+apiVersion: v1beta1
+kind: AgentConfig
+
+metadata:
+  name: "{{ ocp_cluster_name }}"
+
+rendezvousIP: "{{ ocp_sno.network.ip }}"
+
+hosts:
+  - hostname: "{{ ocp_sno.name }}"
+    role: master
+
+    interfaces:
+      - name: "eth0"
+        macAddress: "{{ ocp_sno.network.mac }}"
+
+    rootDeviceHints:
+      deviceName: "/dev/vda"
+
+    networkConfig:
+      interfaces:
+        - name: "eth0"
+          type: ethernet
+          state: up
+          mac-address: "{{ ocp_sno.network.mac }}"
+
+          ipv4:
+            enabled: true
+            dhcp: false
+            address:
+              - ip: "{{ ocp_sno.network.ip }}"
+                prefix-length: {{ ocp_sno.network.prefix }}
+
+          ipv6:
+            enabled: false
+
+      dns-resolver:
+        config:
+          server:
+            - "{{ homelab_network.dns[0] }}"
+
+      routes:
+        config:
+          - destination: "0.0.0.0/0"
+            next-hop-address: "{{ ocp_sno.network.gateway }}"
+            next-hop-interface: "eth0"
+            table-id: 254

@@ -1,0 +1,39 @@
+apiVersion: v1
+baseDomain: {{ ocp_base_domain }}
+
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    replicas: 0
+
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  replicas: 1
+
+metadata:
+  name: {{ ocp_cluster_name }}
+
+networking:
+  clusterNetwork:
+    - cidr: 10.128.0.0/14
+      hostPrefix: 23
+
+  machineNetwork:
+    - cidr: {{ homelab_network.subnet }}
+
+  networkType: OVNKubernetes
+
+  serviceNetwork:
+    - 172.30.0.0/16
+
+platform:
+  none: {}
+
+publish: External
+
+pullSecret: {{ lookup('file', ocp_pull_secret_file) | trim | to_json }}
+
+sshKey: {{ lookup('file', ocp_ssh_public_key_file) | trim | to_json }}

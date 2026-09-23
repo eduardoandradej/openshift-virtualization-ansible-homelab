@@ -28,3 +28,18 @@ metadata.json
 # Local environment
 .env
 .env.*
+
+# ============================================================
+# OpenShift installer - sensitive/generated files
+# ============================================================
+04-openshift-install/secrets/
+04-openshift-install/work/
+04-openshift-install/bin/
+
+agent*.iso
+*.iso
+
+auth/
+kubeconfig
+kubeadmin-password
+.openshift_install*

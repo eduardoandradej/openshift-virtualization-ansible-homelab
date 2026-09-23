@@ -1,0 +1,100 @@
+
+PLAY [Prepare OpenShift 4.22 Agent-based Installer] ****************************
+
+TASK [Show OpenShift installation configuration] *******************************
+ok: [kvm-host] => {
+    "msg": [
+        "OpenShift version: 4.22",
+        "Cluster: ocp.example.lab",
+        "Node: ocp-sno",
+        "Node IP: 192.168.10.200",
+        "MAC: 52:54:00:10:02:00",
+        "Gateway: 192.168.10.1",
+        "DNS: 192.168.10.25",
+        "Machine network: 192.168.10.0/24",
+        "Installation disk: /dev/vda"
+    ]
+}
+
+TASK [Check openshift-install binary] ******************************************
+ok: [kvm-host]
+
+TASK [Check oc binary] *********************************************************
+ok: [kvm-host]
+
+TASK [Check Red Hat pull secret] ***********************************************
+ok: [kvm-host]
+
+TASK [Check OpenShift SSH public key] ******************************************
+ok: [kvm-host]
+
+TASK [Validate required OpenShift files] ***************************************
+ok: [kvm-host] => {
+    "changed": false,
+    "msg": "OpenShift installer prerequisites validated"
+}
+
+TASK [Validate pull secret JSON] ***********************************************
+ok: [kvm-host]
+
+TASK [Confirm pull secret validation] ******************************************
+ok: [kvm-host] => {
+    "msg": "Red Hat pull secret JSON validated successfully."
+}
+
+TASK [Read SSH public key] *****************************************************
+ok: [kvm-host]
+
+TASK [Validate SSH public key] *************************************************
+ok: [kvm-host] => {
+    "changed": false,
+    "msg": "OpenShift SSH public key validated"
+}
+
+TASK [Create OpenShift working directory] **************************************
+ok: [kvm-host]
+
+TASK [Generate install-config.yaml] ********************************************
+ok: [kvm-host]
+
+TASK [Generate agent-config.yaml] **********************************************
+ok: [kvm-host]
+
+TASK [Read generated install-config.yaml] **************************************
+ok: [kvm-host]
+
+TASK [Read generated agent-config.yaml] ****************************************
+ok: [kvm-host]
+
+TASK [Parse generated configuration] *******************************************
+ok: [kvm-host]
+
+TASK [Validate OpenShift install-config] ***************************************
+ok: [kvm-host] => {
+    "changed": false,
+    "msg": "install-config.yaml validated successfully"
+}
+
+TASK [Validate OpenShift agent-config] *****************************************
+ok: [kvm-host] => {
+    "changed": false,
+    "msg": "agent-config.yaml validated successfully"
+}
+
+TASK [OpenShift Agent Installer preparation completed] *************************
+ok: [kvm-host] => {
+    "msg": [
+        "OpenShift Agent-based Installer configuration is ready.",
+        "Cluster: ocp.example.lab",
+        "SNO IP: 192.168.10.200",
+        "Installer directory: /home/suporte/projetos/openshift-virtualization-ansible-homelab/04-openshift-install/work",
+        "install-config.yaml: generated",
+        "agent-config.yaml: generated",
+        "Pull secret: protected",
+        "Installation disk: /dev/vda"
+    ]
+}
+
+PLAY RECAP *********************************************************************
+kvm-host                   : ok=19   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

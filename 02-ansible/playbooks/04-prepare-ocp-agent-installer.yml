@@ -1,0 +1,277 @@
+---
+- name: Prepare OpenShift 4.22 Agent-based Installer
+  hosts: all
+  become: false
+  gather_facts: false
+
+  vars:
+
+    # ----------------------------------------------------------
+    # Project paths
+    # ----------------------------------------------------------
+
+    repo_root: "{{ playbook_dir | dirname | dirname }}"
+
+    ocp_install_root: "{{ repo_root }}/04-openshift-install"
+
+    ocp_bin_dir: "{{ ocp_install_root }}/bin"
+    ocp_template_dir: "{{ ocp_install_root }}/templates"
+    ocp_secret_dir: "{{ ocp_install_root }}/secrets"
+    ocp_work_dir: "{{ ocp_install_root }}/work"
+
+    # ----------------------------------------------------------
+    # OpenShift tools
+    # ----------------------------------------------------------
+
+    ocp_install_binary: "{{ ocp_bin_dir }}/openshift-install"
+    ocp_cli_binary: "{{ ocp_bin_dir }}/oc"
+
+    # ----------------------------------------------------------
+    # Sensitive files
+    # ----------------------------------------------------------
+
+    ocp_pull_secret_file: "{{ ocp_secret_dir }}/pull-secret.json"
+
+    ocp_ssh_public_key_file: >-
+      {{ lookup('env', 'HOME') }}/.ssh/id_ed25519_ocp_lab.pub
+
+    # ----------------------------------------------------------
+    # Templates
+    # ----------------------------------------------------------
+
+    install_config_template: >-
+      {{ ocp_template_dir }}/install-config.yaml.j2
+
+    agent_config_template: >-
+      {{ ocp_template_dir }}/agent-config.yaml.j2
+
+  tasks:
+
+    # ==========================================================
+    # Phase 1 - Show configuration
+    # ==========================================================
+
+    - name: Show OpenShift installation configuration
+      ansible.builtin.debug:
+        msg:
+          - "OpenShift version: {{ ocp_version }}"
+          - "Cluster: {{ ocp_cluster_name }}.{{ ocp_base_domain }}"
+          - "Node: {{ ocp_sno.name }}"
+          - "Node IP: {{ ocp_sno.network.ip }}"
+          - "MAC: {{ ocp_sno.network.mac }}"
+          - "Gateway: {{ ocp_sno.network.gateway }}"
+          - "DNS: {{ homelab_network.dns[0] }}"
+          - "Machine network: {{ homelab_network.subnet }}"
+          - "Installation disk: /dev/vda"
+
+    # ==========================================================
+    # Phase 2 - Validate required files
+    # ==========================================================
+
+    - name: Check openshift-install binary
+      ansible.builtin.stat:
+        path: "{{ ocp_install_binary }}"
+      register: openshift_install_binary
+
+    - name: Check oc binary
+      ansible.builtin.stat:
+        path: "{{ ocp_cli_binary }}"
+      register: oc_binary
+
+    - name: Check Red Hat pull secret
+      ansible.builtin.stat:
+        path: "{{ ocp_pull_secret_file }}"
+      register: pull_secret
+
+    - name: Check OpenShift SSH public key
+      ansible.builtin.stat:
+        path: "{{ ocp_ssh_public_key_file }}"
+      register: ssh_public_key
+
+    - name: Validate required OpenShift files
+      ansible.builtin.assert:
+        that:
+          - openshift_install_binary.stat.exists
+          - oc_binary.stat.exists
+          - pull_secret.stat.exists
+          - ssh_public_key.stat.exists
+
+        success_msg: "OpenShift installer prerequisites validated"
+
+        fail_msg: >-
+          One or more required OpenShift installation files
+          are missing.
+
+    # ==========================================================
+    # Phase 3 - Validate pull secret without displaying it
+    # ==========================================================
+
+    - name: Validate pull secret JSON
+      ansible.builtin.command:
+        cmd: >
+          python3 -m json.tool
+          {{ ocp_pull_secret_file }}
+      register: pull_secret_validation
+      changed_when: false
+      no_log: true
+
+    - name: Confirm pull secret validation
+      ansible.builtin.debug:
+        msg: "Red Hat pull secret JSON validated successfully."
+
+    # ==========================================================
+    # Phase 4 - Validate SSH public key
+    # ==========================================================
+
+    - name: Read SSH public key
+      ansible.builtin.slurp:
+        src: "{{ ocp_ssh_public_key_file }}"
+      register: ssh_public_key_content
+
+    - name: Validate SSH public key
+      ansible.builtin.assert:
+        that:
+          - >
+            (ssh_public_key_content.content |
+             b64decode |
+             trim) is match('^ssh-')
+
+        success_msg: "OpenShift SSH public key validated"
+
+        fail_msg: "Invalid OpenShift SSH public key"
+
+    # ==========================================================
+    # Phase 5 - Prepare working directory
+    # ==========================================================
+
+    - name: Create OpenShift working directory
+      ansible.builtin.file:
+        path: "{{ ocp_work_dir }}"
+        state: directory
+        mode: "0700"
+
+    # ==========================================================
+    # Phase 6 - Generate install-config.yaml
+    # ==========================================================
+
+    - name: Generate install-config.yaml
+      ansible.builtin.template:
+        src: "{{ install_config_template }}"
+        dest: "{{ ocp_work_dir }}/install-config.yaml"
+        mode: "0600"
+
+    # ==========================================================
+    # Phase 7 - Generate agent-config.yaml
+    # ==========================================================
+
+    - name: Generate agent-config.yaml
+      ansible.builtin.template:
+        src: "{{ agent_config_template }}"
+        dest: "{{ ocp_work_dir }}/agent-config.yaml"
+        mode: "0600"
+
+    # ==========================================================
+    # Phase 8 - Parse generated YAML
+    # ==========================================================
+
+    - name: Read generated install-config.yaml
+      ansible.builtin.slurp:
+        src: "{{ ocp_work_dir }}/install-config.yaml"
+      register: install_config_raw
+      no_log: true
+
+    - name: Read generated agent-config.yaml
+      ansible.builtin.slurp:
+        src: "{{ ocp_work_dir }}/agent-config.yaml"
+      register: agent_config_raw
+
+    - name: Parse generated configuration
+      ansible.builtin.set_fact:
+
+        parsed_install_config: >-
+          {{
+            install_config_raw.content |
+            b64decode |
+            from_yaml
+          }}
+
+        parsed_agent_config: >-
+          {{
+            agent_config_raw.content |
+            b64decode |
+            from_yaml
+          }}
+
+      no_log: true
+
+    # ==========================================================
+    # Phase 9 - Validate install-config.yaml
+    # ==========================================================
+
+    - name: Validate OpenShift install-config
+      ansible.builtin.assert:
+        that:
+
+          - parsed_install_config.metadata.name == ocp_cluster_name
+
+          - parsed_install_config.baseDomain == ocp_base_domain
+
+          - parsed_install_config.controlPlane.replicas == 1
+
+          - parsed_install_config.compute[0].replicas == 0
+
+          - >
+            parsed_install_config.networking.networkType
+            == "OVNKubernetes"
+
+          - >
+            parsed_install_config.networking.machineNetwork[0].cidr
+            == homelab_network.subnet
+
+        success_msg: "install-config.yaml validated successfully"
+
+        fail_msg: "install-config.yaml validation failed"
+
+    # ==========================================================
+    # Phase 10 - Validate agent-config.yaml
+    # ==========================================================
+
+    - name: Validate OpenShift agent-config
+      ansible.builtin.assert:
+        that:
+
+          - >
+            parsed_agent_config.rendezvousIP
+            == ocp_sno.network.ip
+
+          - >
+            parsed_agent_config.hosts[0].hostname
+            == ocp_sno.name
+
+          - >
+            parsed_agent_config.hosts[0].interfaces[0].macAddress
+            == ocp_sno.network.mac
+
+          - >
+            parsed_agent_config.hosts[0].rootDeviceHints.deviceName
+            == "/dev/vda"
+
+        success_msg: "agent-config.yaml validated successfully"
+
+        fail_msg: "agent-config.yaml validation failed"
+
+    # ==========================================================
+    # Phase 11 - Summary
+    # ==========================================================
+
+    - name: OpenShift Agent Installer preparation completed
+      ansible.builtin.debug:
+        msg:
+          - "OpenShift Agent-based Installer configuration is ready."
+          - "Cluster: {{ ocp_cluster_name }}.{{ ocp_base_domain }}"
+          - "SNO IP: {{ ocp_sno.network.ip }}"
+          - "Installer directory: {{ ocp_work_dir }}"
+          - "install-config.yaml: generated"
+          - "agent-config.yaml: generated"
+          - "Pull secret: protected"
+          - "Installation disk: /dev/vda"
