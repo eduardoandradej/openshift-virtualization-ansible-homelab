@@ -1,0 +1,80 @@
+---
+- name: Create OpenShift SNO storage
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+
+    - name: Show SNO storage configuration
+      ansible.builtin.debug:
+        msg:
+          - "VM: {{ ocp_sno.name }}"
+          - "System disk: {{ ocp_sno.system_disk.name }}"
+          - "System pool: {{ ocp_sno.system_disk.pool }}"
+          - "System size: {{ ocp_sno.system_disk.size_gb }} GB"
+          - "Data disk: {{ ocp_sno.data_disk.name }}"
+          - "Data pool: {{ ocp_sno.data_disk.pool }}"
+          - "Data size: {{ ocp_sno.data_disk.size_gb }} GB"
+
+    - name: Create SNO system disk
+      community.libvirt.virt_volume:
+        uri: "{{ libvirt_uri }}"
+        pool: "{{ ocp_sno.system_disk.pool }}"
+        state: present
+        xml: |
+          <volume type="file">
+            <name>{{ ocp_sno.system_disk.name }}</name>
+            <allocation>0</allocation>
+            <capacity unit="G">{{ ocp_sno.system_disk.size_gb }}</capacity>
+            <target>
+              <format type="qcow2"/>
+            </target>
+          </volume>
+
+    - name: Create SNO data disk
+      community.libvirt.virt_volume:
+        uri: "{{ libvirt_uri }}"
+        pool: "{{ ocp_sno.data_disk.pool }}"
+        state: present
+        xml: |
+          <volume type="file">
+            <name>{{ ocp_sno.data_disk.name }}</name>
+            <allocation>0</allocation>
+            <capacity unit="G">{{ ocp_sno.data_disk.size_gb }}</capacity>
+            <target>
+              <format type="qcow2"/>
+            </target>
+          </volume>
+
+    - name: Get system disk information
+      ansible.builtin.command:
+        cmd: >
+          virsh -c {{ libvirt_uri }}
+          vol-info
+          --pool {{ ocp_sno.system_disk.pool }}
+          {{ ocp_sno.system_disk.name }}
+      register: system_disk_info
+      changed_when: false
+
+    - name: Get data disk information
+      ansible.builtin.command:
+        cmd: >
+          virsh -c {{ libvirt_uri }}
+          vol-info
+          --pool {{ ocp_sno.data_disk.pool }}
+          {{ ocp_sno.data_disk.name }}
+      register: data_disk_info
+      changed_when: false
+
+    - name: Show system disk validation
+      ansible.builtin.debug:
+        var: system_disk_info.stdout_lines
+
+    - name: Show data disk validation
+      ansible.builtin.debug:
+        var: data_disk_info.stdout_lines
+
+    - name: Storage provisioning completed
+      ansible.builtin.debug:
+        msg: "OpenShift SNO storage provisioned successfully."

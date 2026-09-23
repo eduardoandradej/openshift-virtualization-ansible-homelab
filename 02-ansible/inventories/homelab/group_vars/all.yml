@@ -1,0 +1,36 @@
+---
+# OpenShift HomeLab
+ocp_version: "4.22"
+
+ocp_cluster_name: "ocp"
+ocp_base_domain: "example.lab"
+
+# KVM / libvirt
+libvirt_uri: "qemu:///system"
+
+# OpenShift Single Node
+ocp_sno:
+  name: "ocp-sno"
+  vcpus: 6
+  memory_mb: 22528
+
+  system_disk:
+    name: "ocp-sno-system.qcow2"
+    pool: "ocp-fast"
+    size_gb: 120
+
+  data_disk:
+    name: "ocp-sno-data.qcow2"
+    pool: "ocp-data"
+    size_gb: 100
+
+  network:
+    bridge: "br-ex"
+
+# Current HomeLab network
+homelab_network:
+  subnet: "192.168.10.0/24"
+  gateway: "192.168.10.1"
+  dns:
+    - "192.168.10.1"
+    - "8.8.8.8"

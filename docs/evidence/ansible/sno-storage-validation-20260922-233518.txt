@@ -1,0 +1,45 @@
+===== SYSTEM DISK =====
+Name:           ocp-sno-system.qcow2
+Type:           file
+Capacity:       120.00 GiB
+Allocation:     196.00 KiB
+
+
+image: /var/lib/libvirt/images/ocp-fast/ocp-sno-system.qcow2
+file format: qcow2
+virtual size: 120 GiB (128849018880 bytes)
+disk size: 196 KiB
+cluster_size: 65536
+Format specific information:
+    compat: 0.10
+    compression type: zlib
+    refcount bits: 16
+Child node '/file':
+    filename: /var/lib/libvirt/images/ocp-fast/ocp-sno-system.qcow2
+    protocol type: file
+    file length: 194 KiB (198656 bytes)
+    disk size: 196 KiB
+    Format specific information:
+        extent size hint: 1048576
+
+===== DATA DISK =====
+Name:           ocp-sno-data.qcow2
+Type:           file
+Capacity:       100.00 GiB
+Allocation:     196.00 KiB
+
+
+image: /mnt/hd1tb/libvirt/ocp-data/ocp-sno-data.qcow2
+file format: qcow2
+virtual size: 100 GiB (107374182400 bytes)
+disk size: 196 KiB
+cluster_size: 65536
+Format specific information:
+    compat: 0.10
+    compression type: zlib
+    refcount bits: 16
+Child node '/file':
+    filename: /mnt/hd1tb/libvirt/ocp-data/ocp-sno-data.qcow2
+    protocol type: file
+    file length: 194 KiB (198656 bytes)
+    disk size: 196 KiB
