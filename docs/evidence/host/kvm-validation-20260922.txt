@@ -1,0 +1,31 @@
+===== DATE =====
+Tue Sep 22 10:46:59 PM -03 2026
+
+===== VIRT HOST VALIDATION =====
+  QEMU: Checking for hardware virtualization                                 : PASS
+  QEMU: Checking if device /dev/kvm exists                                   : PASS
+  QEMU: Checking if device /dev/kvm is accessible                            : PASS
+  QEMU: Checking if device /dev/vhost-net exists                             : PASS
+  QEMU: Checking if device /dev/net/tun exists                               : PASS
+  QEMU: Checking for cgroup 'cpu' controller support                         : PASS
+  QEMU: Checking for cgroup 'cpuacct' controller support                     : PASS
+  QEMU: Checking for cgroup 'cpuset' controller support                      : PASS
+  QEMU: Checking for cgroup 'memory' controller support                      : PASS
+  QEMU: Checking for cgroup 'devices' controller support                     : WARN (Enable 'devices' in kernel Kconfig file or mount/enable cgroup controller in your system)
+  QEMU: Checking for cgroup 'blkio' controller support                       : PASS
+  QEMU: Checking for device assignment IOMMU support                         : WARN (No ACPI IVRS table found, IOMMU either disabled in BIOS or not supported by this hardware platform)
+  QEMU: Checking for secure guest support                                    : WARN (Unknown if this platform has Secure Guest support)
+
+===== NESTED VIRTUALIZATION =====
+1
+
+===== KVM MODULES =====
+kvm_amd               212992  0
+ccp                   147456  1 kvm_amd
+kvm                  1339392  1 kvm_amd
+irqbypass              16384  1 kvm
+
+===== STORAGE =====
+Filesystem                     Type  Size  Used Avail Use% Mounted on
+/dev/mapper/rl_home--srv01-var xfs   169G  1.8G  167G   2% /var
+/dev/sdb1                      ext4  916G  219G  652G  26% /mnt/hd1tb
