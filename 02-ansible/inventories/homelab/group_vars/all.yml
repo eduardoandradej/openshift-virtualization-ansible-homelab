@@ -43,9 +43,16 @@ ocp_sno:
 
   network:
     bridge: "br-ex"
+    mac: "52:54:00:10:02:00"
     ip: "192.168.10.200"
     prefix: 24
     gateway: "192.168.10.1"
+
+#  network:
+#    bridge: "br-ex"
+#    ip: "192.168.10.200"
+#    prefix: 24
+#    gateway: "192.168.10.1"
 
 # ------------------------------------------------------------
 # HomeLab Network

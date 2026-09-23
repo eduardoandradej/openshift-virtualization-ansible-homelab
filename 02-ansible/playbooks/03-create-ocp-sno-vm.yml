@@ -1,0 +1,173 @@
+---
+- name: Create OpenShift SNO virtual machine
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+
+    - name: Show OpenShift SNO VM configuration
+      ansible.builtin.debug:
+        msg:
+          - "VM name: {{ ocp_sno.name }}"
+          - "vCPU: {{ ocp_sno.vcpus }}"
+          - "Memory: {{ ocp_sno.memory_mb }} MB"
+          - "Bridge: {{ ocp_sno.network.bridge }}"
+          - "MAC: {{ ocp_sno.network.mac }}"
+          - "Planned IP: {{ ocp_sno.network.ip }}"
+          - "System disk: {{ ocp_sno.system_disk.name }}"
+          - "Data disk: {{ ocp_sno.data_disk.name }}"
+
+    - name: Get system disk path
+      ansible.builtin.command:
+        cmd: >
+          virsh -c {{ libvirt_uri }}
+          vol-path
+          --pool {{ ocp_sno.system_disk.pool }}
+          {{ ocp_sno.system_disk.name }}
+      register: system_disk_path
+      changed_when: false
+
+    - name: Get data disk path
+      ansible.builtin.command:
+        cmd: >
+          virsh -c {{ libvirt_uri }}
+          vol-path
+          --pool {{ ocp_sno.data_disk.pool }}
+          {{ ocp_sno.data_disk.name }}
+      register: data_disk_path
+      changed_when: false
+
+    - name: Check OpenShift bridge
+      ansible.builtin.command:
+        cmd: ip link show {{ ocp_sno.network.bridge }}
+      register: bridge_status
+      changed_when: false
+
+    - name: Validate SNO prerequisites
+      ansible.builtin.assert:
+        that:
+          - system_disk_path.rc == 0
+          - data_disk_path.rc == 0
+          - bridge_status.rc == 0
+        success_msg: "SNO VM prerequisites validated"
+        fail_msg: "SNO VM prerequisites validation failed"
+
+    - name: Check if SNO VM already exists
+      ansible.builtin.command:
+        cmd: >
+          virsh -c {{ libvirt_uri }}
+          dominfo {{ ocp_sno.name }}
+      register: sno_vm_exists
+      changed_when: false
+      failed_when: false
+
+    - name: Define OpenShift SNO VM
+      community.libvirt.virt:
+        uri: "{{ libvirt_uri }}"
+        command: define
+        xml: |
+          <domain type='kvm'>
+            <name>{{ ocp_sno.name }}</name>
+
+            <memory unit='MiB'>{{ ocp_sno.memory_mb }}</memory>
+            <currentMemory unit='MiB'>{{ ocp_sno.memory_mb }}</currentMemory>
+
+            <vcpu placement='static'>{{ ocp_sno.vcpus }}</vcpu>
+
+            <cpu mode='host-passthrough' check='none'/>
+
+            <os>
+              <type arch='x86_64' machine='q35'>hvm</type>
+              <boot dev='cdrom'/>
+              <boot dev='hd'/>
+            </os>
+
+            <features>
+              <acpi/>
+              <apic/>
+            </features>
+
+            <clock offset='utc'/>
+
+            <on_poweroff>destroy</on_poweroff>
+            <on_reboot>restart</on_reboot>
+            <on_crash>restart</on_crash>
+
+            <devices>
+
+              <disk type='file' device='disk'>
+                <driver name='qemu' type='qcow2' cache='none' io='native'/>
+                <source file='{{ system_disk_path.stdout }}'/>
+                <target dev='vda' bus='virtio'/>
+              </disk>
+
+              <disk type='file' device='disk'>
+                <driver name='qemu' type='qcow2' cache='none' io='native'/>
+                <source file='{{ data_disk_path.stdout }}'/>
+                <target dev='vdb' bus='virtio'/>
+              </disk>
+
+              <interface type='bridge'>
+                <mac address='{{ ocp_sno.network.mac }}'/>
+                <source bridge='{{ ocp_sno.network.bridge }}'/>
+                <model type='virtio'/>
+              </interface>
+
+              <serial type='pty'>
+                <target type='isa-serial' port='0'/>
+              </serial>
+
+              <console type='pty'>
+                <target type='serial' port='0'/>
+              </console>
+
+              <channel type='unix'>
+                <target type='virtio'
+                        name='org.qemu.guest_agent.0'/>
+              </channel>
+
+              <input type='tablet' bus='usb'/>
+
+              <graphics type='vnc'
+                        autoport='yes'
+                        listen='0.0.0.0'>
+                <listen type='address'
+                        address='0.0.0.0'/>
+              </graphics>
+
+              <video>
+                <model type='virtio'/>
+              </video>
+
+              <memballoon model='virtio'/>
+
+            </devices>
+          </domain>
+      when: sno_vm_exists.rc != 0
+
+    - name: Get SNO VM information
+      ansible.builtin.command:
+        cmd: >
+          virsh -c {{ libvirt_uri }}
+          dominfo {{ ocp_sno.name }}
+      register: sno_vm_info
+      changed_when: false
+
+    - name: Show SNO VM information
+      ansible.builtin.debug:
+        var: sno_vm_info.stdout_lines
+
+    - name: Validate SNO VM
+      ansible.builtin.assert:
+        that:
+          - sno_vm_info.rc == 0
+        success_msg: "OpenShift SNO VM successfully defined"
+        fail_msg: "OpenShift SNO VM definition failed"
+
+    - name: VM definition completed
+      ansible.builtin.debug:
+        msg:
+          - "VM {{ ocp_sno.name }} is defined."
+          - "VM remains powered off."
+          - "Installation ISO will be attached in the next phase."
