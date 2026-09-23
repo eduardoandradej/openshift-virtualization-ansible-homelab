@@ -1,18 +1,35 @@
 ---
-# OpenShift HomeLab
+# ============================================================
+# OpenShift Virtualization + Ansible HomeLab
+# Global variables
+# ============================================================
+
+# ------------------------------------------------------------
+# OpenShift
+# ------------------------------------------------------------
+
 ocp_version: "4.22"
 
 ocp_cluster_name: "ocp"
 ocp_base_domain: "example.lab"
 
+# ------------------------------------------------------------
 # KVM / libvirt
+# ------------------------------------------------------------
+
 libvirt_uri: "qemu:///system"
 
+# ------------------------------------------------------------
 # OpenShift Single Node
+# ------------------------------------------------------------
+
 ocp_sno:
   name: "ocp-sno"
-  vcpus: 6
-  memory_mb: 22528
+
+  # Physical host:
+  # AMD FX-8300 / 8 logical CPUs / ~30 GiB RAM
+  vcpus: 8
+  memory_mb: 24576
 
   system_disk:
     name: "ocp-sno-system.qcow2"
@@ -26,11 +43,40 @@ ocp_sno:
 
   network:
     bridge: "br-ex"
+    ip: "192.168.10.200"
+    prefix: 24
+    gateway: "192.168.10.1"
 
-# Current HomeLab network
+# ------------------------------------------------------------
+# HomeLab Network
+# ------------------------------------------------------------
+
 homelab_network:
   subnet: "192.168.10.0/24"
   gateway: "192.168.10.1"
+
   dns:
+    - "192.168.10.25"
     - "192.168.10.1"
     - "8.8.8.8"
+
+# ------------------------------------------------------------
+# OpenShift DNS
+# ------------------------------------------------------------
+
+ocp_dns:
+  node: "ocp-sno.ocp.example.lab"
+  api: "api.ocp.example.lab"
+  api_int: "api-int.ocp.example.lab"
+  apps: "apps.ocp.example.lab"
+
+# ------------------------------------------------------------
+# OpenShift DNS records
+#
+# Expected resolution:
+#
+# ocp-sno.ocp.example.lab  -> 192.168.10.200
+# api.ocp.example.lab      -> 192.168.10.200
+# api-int.ocp.example.lab  -> 192.168.10.200
+# *.apps.ocp.example.lab   -> 192.168.10.200
+# ------------------------------------------------------------

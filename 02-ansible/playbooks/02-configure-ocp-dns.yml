@@ -1,0 +1,218 @@
+---
+- name: Configure DNS for OpenShift SNO HomeLab
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars:
+    ocp_dns_server_ip: "{{ homelab_network.dns[0] }}"
+
+    ocp_upstream_dns:
+      - "{{ homelab_network.dns[1] }}"
+      - "{{ homelab_network.dns[2] }}"
+
+    ocp_cluster_domain: "{{ ocp_cluster_name }}.{{ ocp_base_domain }}"
+
+    dnsmasq_ocp_config: "/etc/dnsmasq-ocp.conf"
+    dnsmasq_ocp_service: "/etc/systemd/system/dnsmasq-ocp.service"
+
+  tasks:
+
+    - name: Show OpenShift DNS configuration
+      ansible.builtin.debug:
+        msg:
+          - "DNS server: {{ ocp_dns_server_ip }}"
+          - "Cluster domain: {{ ocp_cluster_domain }}"
+          - "SNO node: {{ ocp_dns.node }} -> {{ ocp_sno.network.ip }}"
+          - "API: {{ ocp_dns.api }} -> {{ ocp_sno.network.ip }}"
+          - "API internal: {{ ocp_dns.api_int }} -> {{ ocp_sno.network.ip }}"
+          - "Apps wildcard: *.{{ ocp_dns.apps }} -> {{ ocp_sno.network.ip }}"
+
+    - name: Install DNS packages
+      ansible.builtin.dnf:
+        name:
+          - dnsmasq
+          - bind-utils
+        state: present
+
+    - name: Ensure generic dnsmasq service is disabled
+      ansible.builtin.systemd:
+        name: dnsmasq
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Create dedicated OpenShift dnsmasq configuration
+      ansible.builtin.copy:
+        dest: "{{ dnsmasq_ocp_config }}"
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          # ============================================================
+          # OpenShift 4.22 HomeLab DNS
+          # Managed by Ansible
+          # ============================================================
+
+          port=53
+          listen-address={{ ocp_dns_server_ip }}
+          bind-interfaces
+
+          pid-file=/run/dnsmasq-ocp.pid
+
+          no-resolv
+
+          server={{ ocp_upstream_dns[0] }}
+          server={{ ocp_upstream_dns[1] }}
+
+          domain-needed
+          bogus-priv
+          cache-size=1000
+
+          local=/{{ ocp_cluster_domain }}/
+
+          host-record={{ ocp_dns.node }},{{ ocp_sno.network.ip }}
+          host-record={{ ocp_dns.api }},{{ ocp_sno.network.ip }}
+          host-record={{ ocp_dns.api_int }},{{ ocp_sno.network.ip }}
+
+          address=/{{ ocp_dns.apps }}/{{ ocp_sno.network.ip }}
+      notify: Restart OpenShift DNS
+
+    - name: Create dedicated OpenShift dnsmasq systemd service
+      ansible.builtin.copy:
+        dest: "{{ dnsmasq_ocp_service }}"
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=DNSMasq for OpenShift HomeLab
+          Documentation=man:dnsmasq(8)
+          After=network-online.target
+          Wants=network-online.target
+          Conflicts=dnsmasq.service
+
+          [Service]
+          Type=simple
+          ExecStart=/usr/sbin/dnsmasq \
+            --keep-in-foreground \
+            --conf-file={{ dnsmasq_ocp_config }}
+          ExecReload=/bin/kill -HUP $MAINPID
+          Restart=on-failure
+          RestartSec=2
+
+          [Install]
+          WantedBy=multi-user.target
+      notify:
+        - Reload systemd
+        - Restart OpenShift DNS
+
+    - name: Ensure OpenShift DNS is enabled and running
+      ansible.builtin.systemd:
+        name: dnsmasq-ocp
+        state: started
+        enabled: true
+
+    - name: Apply pending handlers before DNS validation
+      ansible.builtin.meta: flush_handlers
+
+    - name: Wait for OpenShift DNS TCP port
+      ansible.builtin.wait_for:
+        host: "{{ ocp_dns_server_ip }}"
+        port: 53
+        timeout: 10
+
+    - name: Resolve OpenShift node
+      ansible.builtin.command:
+        cmd: >
+          dig +short @{{ ocp_dns_server_ip }}
+          {{ ocp_dns.node }} A
+      register: dns_node
+      changed_when: false
+
+    - name: Resolve OpenShift API
+      ansible.builtin.command:
+        cmd: >
+          dig +short @{{ ocp_dns_server_ip }}
+          {{ ocp_dns.api }} A
+      register: dns_api
+      changed_when: false
+
+    - name: Resolve OpenShift internal API
+      ansible.builtin.command:
+        cmd: >
+          dig +short @{{ ocp_dns_server_ip }}
+          {{ ocp_dns.api_int }} A
+      register: dns_api_int
+      changed_when: false
+
+    - name: Resolve OpenShift wildcard application
+      ansible.builtin.command:
+        cmd: >
+          dig +short @{{ ocp_dns_server_ip }}
+          test.{{ ocp_dns.apps }} A
+      register: dns_apps
+      changed_when: false
+
+    - name: Validate OpenShift node DNS
+      ansible.builtin.assert:
+        that:
+          - ocp_sno.network.ip in dns_node.stdout_lines
+        success_msg: "{{ ocp_dns.node }} resolves correctly"
+        fail_msg: "{{ ocp_dns.node }} DNS resolution failed"
+
+    - name: Validate OpenShift API DNS
+      ansible.builtin.assert:
+        that:
+          - ocp_sno.network.ip in dns_api.stdout_lines
+        success_msg: "{{ ocp_dns.api }} resolves correctly"
+        fail_msg: "{{ ocp_dns.api }} DNS resolution failed"
+
+    - name: Validate OpenShift internal API DNS
+      ansible.builtin.assert:
+        that:
+          - ocp_sno.network.ip in dns_api_int.stdout_lines
+        success_msg: "{{ ocp_dns.api_int }} resolves correctly"
+        fail_msg: "{{ ocp_dns.api_int }} DNS resolution failed"
+
+    - name: Validate OpenShift application wildcard DNS
+      ansible.builtin.assert:
+        that:
+          - ocp_sno.network.ip in dns_apps.stdout_lines
+        success_msg: "*.{{ ocp_dns.apps }} resolves correctly"
+        fail_msg: "*.{{ ocp_dns.apps }} DNS resolution failed"
+
+    - name: Test upstream DNS forwarding
+      ansible.builtin.command:
+        cmd: >
+          dig +short @{{ ocp_dns_server_ip }}
+          redhat.com A
+      register: dns_external
+      changed_when: false
+
+    - name: Validate upstream DNS forwarding
+      ansible.builtin.assert:
+        that:
+          - dns_external.stdout | length > 0
+        success_msg: "External DNS forwarding working"
+        fail_msg: "External DNS forwarding failed"
+
+    - name: DNS configuration completed
+      ansible.builtin.debug:
+        msg:
+          - "OpenShift DNS configured successfully."
+          - "{{ ocp_dns.node }} -> {{ dns_node.stdout }}"
+          - "{{ ocp_dns.api }} -> {{ dns_api.stdout }}"
+          - "{{ ocp_dns.api_int }} -> {{ dns_api_int.stdout }}"
+          - "*.{{ ocp_dns.apps }} -> {{ dns_apps.stdout }}"
+
+  handlers:
+
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart OpenShift DNS
+      ansible.builtin.systemd:
+        name: dnsmasq-ocp
+        state: restarted
