@@ -1,0 +1,56 @@
+
+PLAY [Create OpenShift SNO storage] ********************************************
+
+TASK [Show SNO storage configuration] ******************************************
+ok: [kvm-host] => {
+    "msg": [
+        "VM: ocp-sno",
+        "System disk: ocp-sno-system.qcow2",
+        "System pool: ocp-fast",
+        "System size: 120 GB",
+        "Data disk: ocp-sno-data.qcow2",
+        "Data pool: ocp-data",
+        "Data size: 100 GB"
+    ]
+}
+
+TASK [Create SNO system disk] **************************************************
+ok: [kvm-host]
+
+TASK [Create SNO data disk] ****************************************************
+ok: [kvm-host]
+
+TASK [Get system disk information] *********************************************
+ok: [kvm-host]
+
+TASK [Get data disk information] ***********************************************
+ok: [kvm-host]
+
+TASK [Show system disk validation] *********************************************
+ok: [kvm-host] => {
+    "system_disk_info.stdout_lines": [
+        "Name:           ocp-sno-system.qcow2",
+        "Type:           file",
+        "Capacity:       120.00 GiB",
+        "Allocation:     196.00 KiB"
+    ]
+}
+
+TASK [Show data disk validation] ***********************************************
+ok: [kvm-host] => {
+    "data_disk_info.stdout_lines": [
+        "Name:           ocp-sno-data.qcow2",
+        "Type:           file",
+        "Capacity:       100.00 GiB",
+        "Allocation:     196.00 KiB"
+    ]
+}
+
+TASK [Storage provisioning completed] ******************************************
+ok: [kvm-host] => {
+    "msg": "OpenShift SNO storage provisioned successfully."
+}
+
+PLAY RECAP *********************************************************************
+kvm-host                   : ok=8    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
