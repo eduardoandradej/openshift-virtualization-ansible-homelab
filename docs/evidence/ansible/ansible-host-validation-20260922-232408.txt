@@ -1,0 +1,75 @@
+
+PLAY [Validate KVM host for OpenShift HomeLab] *********************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [kvm-host]
+
+TASK [Show host information] ***************************************************
+ok: [kvm-host] => {
+    "msg": [
+        "Host: kvm-server",
+        "OS: Rocky 9.4",
+        "CPU: 8",
+        "Memory: 31570 MB"
+    ]
+}
+
+TASK [Check KVM device] ********************************************************
+ok: [kvm-host]
+
+TASK [Validate KVM device] *****************************************************
+ok: [kvm-host] => {
+    "changed": false,
+    "msg": "/dev/kvm available"
+}
+
+TASK [Check AMD nested virtualization] *****************************************
+ok: [kvm-host]
+
+TASK [Validate nested virtualization] ******************************************
+ok: [kvm-host] => {
+    "changed": false,
+    "msg": "AMD nested virtualization enabled"
+}
+
+TASK [Check ocp-fast storage pool] *********************************************
+ok: [kvm-host]
+
+TASK [Validate ocp-fast storage pool] ******************************************
+ok: [kvm-host] => {
+    "changed": false,
+    "msg": "ocp-fast storage pool available and running"
+}
+
+TASK [Check ocp-data storage pool] *********************************************
+ok: [kvm-host]
+
+TASK [Validate ocp-data storage pool] ******************************************
+ok: [kvm-host] => {
+    "changed": false,
+    "msg": "ocp-data storage pool available and running"
+}
+
+TASK [Check br-ex interface] ***************************************************
+ok: [kvm-host]
+
+TASK [Validate br-ex] **********************************************************
+ok: [kvm-host] => {
+    "changed": false,
+    "msg": "br-ex available"
+}
+
+TASK [Validate minimum available memory] ***************************************
+ok: [kvm-host] => {
+    "changed": false,
+    "msg": "Physical memory suitable for HomeLab design"
+}
+
+TASK [HomeLab validation complete] *********************************************
+ok: [kvm-host] => {
+    "msg": "KVM host validation completed successfully."
+}
+
+PLAY RECAP *********************************************************************
+kvm-host                   : ok=14   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

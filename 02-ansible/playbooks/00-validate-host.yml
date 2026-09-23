@@ -1,0 +1,94 @@
+---
+- name: Validate KVM host for OpenShift HomeLab
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+
+    - name: Show host information
+      ansible.builtin.debug:
+        msg:
+          - "Host: {{ ansible_hostname }}"
+          - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "CPU: {{ ansible_processor_vcpus }}"
+          - "Memory: {{ ansible_memtotal_mb }} MB"
+
+    - name: Check KVM device
+      ansible.builtin.stat:
+        path: /dev/kvm
+      register: kvm_device
+
+    - name: Validate KVM device
+      ansible.builtin.assert:
+        that:
+          - kvm_device.stat.exists
+        success_msg: "/dev/kvm available"
+        fail_msg: "/dev/kvm not available"
+
+    - name: Check AMD nested virtualization
+      ansible.builtin.slurp:
+        src: /sys/module/kvm_amd/parameters/nested
+      register: nested
+
+    - name: Validate nested virtualization
+      ansible.builtin.assert:
+        that:
+          - (nested.content | b64decode | trim) == "1"
+        success_msg: "AMD nested virtualization enabled"
+        fail_msg: "AMD nested virtualization disabled"
+
+    - name: Check ocp-fast storage pool
+      ansible.builtin.command:
+        cmd: virsh -c qemu:///system pool-info ocp-fast
+      register: ocp_fast_pool
+      changed_when: false
+      failed_when: false
+
+    - name: Validate ocp-fast storage pool
+      ansible.builtin.assert:
+        that:
+          - ocp_fast_pool.rc == 0
+          - "'running' in ocp_fast_pool.stdout"
+        success_msg: "ocp-fast storage pool available and running"
+        fail_msg: "ocp-fast storage pool unavailable or stopped"
+
+    - name: Check ocp-data storage pool
+      ansible.builtin.command:
+        cmd: virsh -c qemu:///system pool-info ocp-data
+      register: ocp_data_pool
+      changed_when: false
+      failed_when: false
+
+    - name: Validate ocp-data storage pool
+      ansible.builtin.assert:
+        that:
+          - ocp_data_pool.rc == 0
+          - "'running' in ocp_data_pool.stdout"
+        success_msg: "ocp-data storage pool available and running"
+        fail_msg: "ocp-data storage pool unavailable or stopped"
+
+    - name: Check br-ex interface
+      ansible.builtin.command:
+        cmd: ip link show br-ex
+      register: brex
+      changed_when: false
+      failed_when: false
+
+    - name: Validate br-ex
+      ansible.builtin.assert:
+        that:
+          - brex.rc == 0
+        success_msg: "br-ex available"
+        fail_msg: "br-ex unavailable"
+
+    - name: Validate minimum available memory
+      ansible.builtin.assert:
+        that:
+          - ansible_memtotal_mb >= 28000
+        success_msg: "Physical memory suitable for HomeLab design"
+        fail_msg: "Insufficient physical memory"
+
+    - name: HomeLab validation complete
+      ansible.builtin.debug:
+        msg: "KVM host validation completed successfully."
